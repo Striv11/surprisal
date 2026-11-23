@@ -17,11 +17,11 @@ const nativeS = native.map(Number);
 const h = x.sp_create(7, 24, 42);
 assert.ok(h !== 0);
 const melody = [0, 2, 4, 2, 0, 2, 4, 6];
-for (let e = 0; e < 30; e++) { x.sp_reset(h); for (const s of melody) x.sp_observe(h, s); }
+for (let e = 0; e < 200; e++) { x.sp_reset(h); for (const s of melody) x.sp_observe(h, s); }
 x.sp_reset(h);
 const got = [...melody, 3, 1].map((s) => x.sp_observe(h, s));
 got.forEach((v, i) => assert.ok(Math.abs(v - nativeS[i]) < 1e-5, `step ${i}: wasm ${v} vs native ${nativeS[i]}`));
-assert.ok(got[8] > 5 * got[7], "wrong note should spike");
+assert.ok(got[8] > 5 * Math.max(...got.slice(1, 8)), "wrong note should spike");
 
 const buf = x.sp_alloc(7 * 4);
 assert.equal(x.sp_predict(h, buf, 7), 7);

@@ -6,7 +6,7 @@ fn main() {
     cfg.seed = 42;
     let mut m = Model::new(cfg);
     let melody = [0usize, 2, 4, 2, 0, 2, 4, 6];
-    for _ in 0..30 {
+    for _ in 0..200 {
         m.reset_context();
         for &s in &melody {
             m.observe(s);
