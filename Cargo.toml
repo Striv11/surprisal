@@ -1,0 +1,19 @@
+[package]
+name = "surprisal"
+version = "0.1.0"
+edition = "2021"
+description = "A predictive-coding sequence learner that learns online and shows its surprise"
+license = "MIT"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "surprisal"
+path = "src/main.rs"
+
+[dependencies]
+
+[profile.release]
+opt-level = 3
+lto = true
