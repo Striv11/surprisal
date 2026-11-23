@@ -6,6 +6,7 @@ description = "A predictive-coding sequence learner that learns online and shows
 license = "MIT"
 
 [lib]
+crate-type = ["rlib", "cdylib"]
 path = "src/lib.rs"
 
 [[bin]]
@@ -17,3 +18,6 @@ path = "src/main.rs"
 [profile.release]
 opt-level = 3
 lto = true
+panic = "abort"
+strip = true
+codegen-units = 1

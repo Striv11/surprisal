@@ -26,7 +26,8 @@ Most sequence models are trained offline with backpropagation through time and a
   src/rng.rs    deterministic xorshift PRNG
   src/model.rs  the network (Config, Model, StepReport)
   src/main.rs   terminal demo
-  (planned)  src/wasm.rs C-ABI exports  →  web/ UI (Vite, TypeScript)
+  src/wasm.rs   C-ABI exports (sp_create/observe/predict/generate/reset)
+  (planned)  web/ UI (Vite, TypeScript)
 ```
 Invariants: predictions are a probability distribution; the prediction for `o_t` is made before `o_t` influences state; given a seed, training is bit-for-bit reproducible.
 
@@ -35,6 +36,8 @@ Prerequisites: a stable Rust toolchain.
 ```
 bash check.sh        # fmt, clippy, tests
 cargo run --release  # terminal demo
+cargo build --release --lib --target wasm32-unknown-unknown  # browser module
+node tests-js/parity.mjs  # wasm == native check
 ```
 
 ## Demo
@@ -56,7 +59,7 @@ Browser demo (piano keys, text patterns, surprise timeline, "dream" mode): **pla
 
 ## Roadmap
 - [x] Day 1: core model, PRNG, tests, terminal demo
-- [ ] WASM C-ABI build and JS loader
+- [x] WASM C-ABI build (28 KB) and Node parity test
 - [ ] Web UI: input, expectation bars, surprise timeline
 - [ ] Hierarchical (two-level) model
 - [ ] Playwright e2e, benchmarks, Pages deploy
