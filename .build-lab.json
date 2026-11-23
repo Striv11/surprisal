@@ -1,0 +1,1 @@
+{"name": "surprisal", "description": "A brain-inspired predictive-coding sequence learner in Rust/WASM that shows its surprise as it learns.", "language": "Rust", "arc_days": 7, "pages": true}
