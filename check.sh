@@ -13,3 +13,9 @@ if command -v node >/dev/null && rustup target list --installed 2>/dev/null | gr
 else
   echo "skipping wasm parity (node or wasm32 target missing)"
 fi
+# Web app: typecheck, unit tests (need the wasm built above) and a production build.
+if [ -d web/node_modules ]; then
+  (cd web && npm run typecheck && npm test && npm run build)
+else
+  echo "skipping web checks (run 'npm ci' in web/ first)"
+fi

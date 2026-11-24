@@ -27,7 +27,9 @@ Most sequence models are trained offline with backpropagation through time and a
   src/model.rs  the network (Config, Model, StepReport)
   src/main.rs   terminal demo
   src/wasm.rs   C-ABI exports (sp_create/observe/predict/generate/reset)
-  (planned)  web/ UI (Vite, TypeScript)
+  web/src/engine.ts   typed wrapper over the C ABI
+  web/src/pattern.ts  note/pattern parsing
+  web/src/main.ts     UI (piano, text input, expectation bars, history)
 ```
 Invariants: predictions are a probability distribution; the prediction for `o_t` is made before `o_t` influences state; given a seed, training is bit-for-bit reproducible.
 
@@ -38,6 +40,8 @@ bash check.sh        # fmt, clippy, tests
 cargo run --release  # terminal demo
 cargo build --release --lib --target wasm32-unknown-unknown  # browser module
 node tests-js/parity.mjs  # wasm == native check
+cd web && npm ci && npm run dev    # web app (builds the wasm, then Vite)
+cd web && npm test && npm run build  # unit tests, static dist/
 ```
 
 ## Demo
@@ -60,7 +64,8 @@ Browser demo (piano keys, text patterns, surprise timeline, "dream" mode): **pla
 ## Roadmap
 - [x] Day 1: core model, PRNG, tests, terminal demo
 - [x] WASM C-ABI build (28 KB) and Node parity test
-- [ ] Web UI: input, expectation bars, surprise timeline
+- [x] Web app shell: piano + text input, expectation bars, history
+- [ ] Surprise timeline canvas, dream mode, Pages deploy
 - [ ] Hierarchical (two-level) model
 - [ ] Playwright e2e, benchmarks, Pages deploy
 - [ ] Save/load model, presets, polish
