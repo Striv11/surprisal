@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>surprisal — watch a model be surprised</title>
+<link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+<main>
+  <h1>surprisal</h1>
+  <p class="lede">A tiny predictive-coding network, running in your browser. Play or type a pattern, repeat it, and watch the model's expectation sharpen. Then break the pattern.</p>
+  <p id="status" role="status">Loading model…</p>
+
+  <section aria-labelledby="in">
+    <h2 id="in">Play</h2>
+    <div id="piano" role="group" aria-label="Piano keys"></div>
+    <form id="text-form">
+      <label>Pattern <input id="text" value="C E G E C E G B" autocomplete="off" spellcheck="false"></label>
+      <button type="submit">Feed once</button>
+      <button type="button" id="train">Train ×20</button>
+      <button type="button" id="reset">Forget context</button>
+    </form>
+    <p id="error" role="alert"></p>
+    <p>Presets: <span id="presets"></span></p>
+  </section>
+
+  <section aria-labelledby="ex">
+    <h2 id="ex">Expectation for the next note</h2>
+    <div id="bars" aria-live="polite"></div>
+  </section>
+
+  <section aria-labelledby="hist">
+    <h2 id="hist">History</h2>
+    <p id="empty">Nothing yet — press a key or feed a pattern.</p>
+    <ol id="history"></ol>
+  </section>
+</main>
+<script type="module" src="./src/main.ts"></script>
+</body>
+</html>
