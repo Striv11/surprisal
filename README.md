@@ -2,7 +2,7 @@
 
 > A brain-inspired sequence learner that predicts what comes next, learns online from its own prediction errors, and lets you watch its *surprise*. Rust, compiled to WebAssembly.
 
-**Live demo:** planned (GitHub Pages, arrives on Day 4).
+**Live demo:** https://striv11.github.io/surprisal/ (built and deployed by `.github/workflows/pages.yml` on every push to main; requires Pages source set to "GitHub Actions").
 
 ![CI](https://github.com/Striv11/surprisal/actions/workflows/ci.yml/badge.svg)
 
@@ -29,7 +29,8 @@ Most sequence models are trained offline with backpropagation through time and a
   src/wasm.rs   C-ABI exports (sp_create/observe/predict/generate/reset)
   web/src/engine.ts   typed wrapper over the C ABI
   web/src/pattern.ts  note/pattern parsing
-  web/src/main.ts     UI (piano, text input, expectation bars, history)
+  web/src/timeline.ts anomaly detection + canvas surprise timeline
+  web/src/main.ts     UI (piano, text input, expectation bars, timeline, dream, history)
 ```
 Invariants: predictions are a probability distribution; the prediction for `o_t` is made before `o_t` influences state; given a seed, training is bit-for-bit reproducible.
 
@@ -54,7 +55,7 @@ epoch  mean surprise (nats)  next-note accuracy
   120                 0.046                100%
 dreamed continuation: C E G E C E G B C E G E C E G B
 ```
-Browser demo (piano keys, text patterns, surprise timeline, "dream" mode): **planned**.
+Browser demo: piano keys, text patterns, expectation bars, a canvas surprise timeline with anomalies marked red (surprise > 1.5 nats and > 3x the earlier median), and a "dream" button that samples a continuation without learning.
 
 ## Design decisions & trade-offs
 - Single-level temporal model first; a hierarchy (higher layer predicting the lower layer's state) is a roadmap item.
@@ -65,7 +66,7 @@ Browser demo (piano keys, text patterns, surprise timeline, "dream" mode): **pla
 - [x] Day 1: core model, PRNG, tests, terminal demo
 - [x] WASM C-ABI build (28 KB) and Node parity test
 - [x] Web app shell: piano + text input, expectation bars, history
-- [ ] Surprise timeline canvas, dream mode, Pages deploy
+- [x] Surprise timeline canvas, dream mode, Pages workflow
 - [ ] Hierarchical (two-level) model
 - [ ] Playwright e2e, benchmarks, Pages deploy
 - [ ] Save/load model, presets, polish

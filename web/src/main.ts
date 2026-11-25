@@ -1,9 +1,10 @@
 import { Engine } from "./engine.ts";
+import { drawTimeline, findAnomalies } from "./timeline.ts";
 import { NOTES, PRESETS, argmax, parsePattern } from "./pattern.ts";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-const SPIKE_NATS = 1.5; // history entries above this are highlighted
 const MAX_HISTORY = 64;
+let dreamSeed = 1;
 
 let engine: Engine;
 const history: { note: number; surprise: number }[] = [];
@@ -21,10 +22,12 @@ function render(): void {
     }),
   );
   $("empty").hidden = history.length > 0;
+  const anomalies = new Set(findAnomalies(history.map((h) => h.surprise)));
+  redrawTimeline();
   $("history").replaceChildren(
-    ...history.map((h) => {
+    ...history.map((h, i) => {
       const li = document.createElement("li");
-      if (h.surprise > SPIKE_NATS) li.className = "spike";
+      if (anomalies.has(i)) li.className = "spike";
       li.title = `surprise ${h.surprise.toFixed(2)} nats`;
       const small = document.createElement("small");
       small.textContent = h.surprise.toFixed(1);
@@ -32,6 +35,14 @@ function render(): void {
       return li;
     }),
   );
+}
+
+function redrawTimeline(): void {
+  const css = getComputedStyle(document.documentElement);
+  const v = (n: string) => css.getPropertyValue(n).trim();
+  drawTimeline($("timeline") as HTMLCanvasElement, history.map((h) => h.surprise), {
+    line: v("--accent"), spike: v("--hot"), grid: "rgba(128,128,128,.35)", text: v("--muted"),
+  });
 }
 
 function feed(note: number): void {
@@ -91,6 +102,11 @@ async function main(): Promise<void> {
     render();
   });
   $("reset").addEventListener("click", () => { engine.reset(); history.length = 0; render(); });
+  $("dream").addEventListener("click", () => {
+    const notes = engine.generate(16, dreamSeed++);
+    $("dreamed").textContent = notes.map((n) => NOTES[n]).join(" ");
+  });
+  window.addEventListener("resize", redrawTimeline);
   render();
 }
 

@@ -30,9 +30,22 @@
     <div id="bars" aria-live="polite"></div>
   </section>
 
+  <section aria-labelledby="tl">
+    <h2 id="tl">Surprise over time</h2>
+    <canvas id="timeline" role="img" aria-label="Line chart of surprise in nats per note; anomalies are marked red" height="140"></canvas>
+    <p class="hint">Red markers are anomalies: surprise above 1.5 nats and 3× the earlier median.</p>
+  </section>
+
+  <section aria-labelledby="dr">
+    <h2 id="dr">Dream</h2>
+    <p>Let the model continue from where it is, sampling from its own expectations. Nothing is learned while dreaming.</p>
+    <button type="button" id="dream">Dream 16 notes</button>
+    <p id="dreamed" aria-live="polite"></p>
+  </section>
+
   <section aria-labelledby="hist">
     <h2 id="hist">History</h2>
-    <p id="empty">Nothing yet — press a key or feed a pattern.</p>
+    <p id="empty">Nothing yet — press a key, or pick a preset and press <b>Train ×20</b>, then <b>Feed once</b>.</p>
     <ol id="history"></ol>
   </section>
 </main>

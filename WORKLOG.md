@@ -24,3 +24,12 @@ Newest entries at the bottom. Each entry records what actually changed, what was
 - Learned: exact dream equality is brittle because generation samples; asserting the share of learned transitions is the honest check. Node strip-types forbids TS parameter properties.
 - Not verified: visual rendering in a real browser (no browser here); Playwright e2e is planned for Day 6.
 - Next: Day 4 canvas surprise timeline, dream button, pages.yml deploy.
+
+## 2026-11-25 (Day 4)
+- Added `web/src/timeline.ts`: `findAnomalies` (surprise > 1.5 nats and > 3x the median of earlier values) and a HiDPI canvas line chart with red anomaly markers; the history strip uses the same rule so both views agree. Replaces the fixed threshold from Day 3.
+- Added a Dream section (16 sampled notes from the current context, no learning, new seed per click) and a more helpful empty state.
+- Added `.github/workflows/pages.yml` (tests, build, upload `web/dist`, deploy-pages); README links the expected URL.
+- Fixed: `npm run build:wasm` failed on a fresh checkout because `web/public/` is gitignored and absent; it now `mkdir -p`s it (this would have broken the Pages build).
+- Tests: 4 anomaly cases (spike after learned stretch, sub-floor jitter ignored, unlearned high stream flagged only at the first symbol, empty).
+- Not verified: canvas rendering in a browser and the Pages deploy itself (no browser or GitHub access here); Pages source must be set to "GitHub Actions" in repo settings.
+- Next: Day 5 two-level hierarchy (level-2 predicts level-1 state) with a test on period-16 structure.
