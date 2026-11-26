@@ -8,14 +8,23 @@
 
 use crate::model::{Config, Model};
 
-/// Create a model. Returns null for invalid sizes.
+/// Create a single-level model. Returns null for invalid sizes.
 #[no_mangle]
 pub extern "C" fn sp_create(vocab: u32, hidden: u32, seed: u32) -> *mut Model {
-    if !(2..=256).contains(&vocab) || !(1..=1024).contains(&hidden) {
+    sp_create2(vocab, hidden, 0, seed)
+}
+
+/// Create a model with an optional slow second level of `top` units
+/// (0 = single level, at most 1024). Returns null for invalid sizes.
+#[no_mangle]
+pub extern "C" fn sp_create2(vocab: u32, hidden: u32, top: u32, seed: u32) -> *mut Model {
+    if !(2..=256).contains(&vocab) || !(1..=1024).contains(&hidden) || top > 1024 {
         return std::ptr::null_mut();
     }
     let mut cfg = Config::new(vocab as usize);
     cfg.hidden = hidden as usize;
+    cfg.top_hidden = top as usize;
+    cfg.top_leak = 0.4;
     cfg.seed = seed as u64;
     Box::into_raw(Box::new(Model::new(cfg)))
 }
@@ -126,6 +135,11 @@ mod tests {
         unsafe {
             assert!(sp_create(1, 8, 1).is_null());
             assert!(sp_create(4, 0, 1).is_null());
+            assert!(sp_create2(4, 8, 2000, 1).is_null());
+            let t = sp_create2(4, 8, 8, 1);
+            assert!(!t.is_null());
+            assert!(sp_observe(t, 2) >= 0.0);
+            sp_free(t);
             let h = sp_create(4, 8, 1);
             assert_eq!(sp_observe(h, 4), -1.0);
             assert_eq!(sp_observe(std::ptr::null_mut(), 0), -1.0);

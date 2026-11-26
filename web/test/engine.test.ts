@@ -52,3 +52,25 @@ test("bad input is rejected with clear errors", { skip }, async () => {
   e.free();
   assert.throws(() => e.predict(), /freed/);
 });
+
+test("two-level engine beats single-level on a period-16 pattern", { skip }, async () => {
+  const wasm = readFileSync(wasmPath);
+  const half = [0, 1, 2, 3, 0, 1, 2, 3];
+  const period = [...half, ...half.slice(0, 7), 4];
+  const tune = Array.from({ length: 8 }, () => period).flat();
+  const run = async (top: number): Promise<number> => {
+    const e = await Engine.load(wasm, 5, 24, 1, top);
+    // (leak and top-down rate come from sp_create2's defaults)
+    for (let i = 0; i < 300; i++) {
+      e.reset();
+      for (const s of tune) e.observe(s);
+    }
+    e.reset();
+    const mean = tune.reduce((a, s) => a + e.observe(s), 0) / tune.length;
+    e.free();
+    return mean;
+  };
+  const one = await run(0);
+  const two = await run(32);
+  assert.ok(two < one * 0.6, `one ${one}, two ${two}`);
+});

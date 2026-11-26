@@ -26,7 +26,7 @@ Most sequence models are trained offline with backpropagation through time and a
   src/rng.rs    deterministic xorshift PRNG
   src/model.rs  the network (Config, Model, StepReport)
   src/main.rs   terminal demo
-  src/wasm.rs   C-ABI exports (sp_create/observe/predict/generate/reset)
+  src/wasm.rs   C-ABI exports (sp_create/sp_create2/observe/predict/generate/reset)
   web/src/engine.ts   typed wrapper over the C ABI
   web/src/pattern.ts  note/pattern parsing
   web/src/timeline.ts anomaly detection + canvas surprise timeline
@@ -58,7 +58,7 @@ dreamed continuation: C E G E C E G B C E G E C E G B
 Browser demo: piano keys, text patterns, expectation bars, a canvas surprise timeline with anomalies marked red (surprise > 1.5 nats and > 3x the earlier median), and a "dream" button that samples a continuation without learning.
 
 ## Design decisions & trade-offs
-- Single-level temporal model first; a hierarchy (higher layer predicting the lower layer's state) is a roadmap item.
+- Optional second level (`Config::top_hidden`): a slow leaky layer `z` integrates level-1 states and sends a top-down term `D z` into the level-1 prior; `D` learns with the same local rule (state error x presynaptic `z`). The recurrence and level-1->2 weights are fixed random (reservoir-style), a deliberate simplification: only top-down weights are learned. On a period-16 tune whose halves share all local contexts, mean surprise drops ~3.5x versus one level.
 - Cross-entropy sensory error (softmax readout) instead of Gaussian error: gives a clean probability per symbol and surprise in nats.
 - f32 throughout for small WASM size and speed; determinism comes from the custom PRNG and a fixed operation order.
 
@@ -67,7 +67,7 @@ Browser demo: piano keys, text patterns, expectation bars, a canvas surprise tim
 - [x] WASM C-ABI build (28 KB) and Node parity test
 - [x] Web app shell: piano + text input, expectation bars, history
 - [x] Surprise timeline canvas, dream mode, Pages workflow
-- [ ] Hierarchical (two-level) model
+- [x] Hierarchical (two-level) model with UI toggle
 - [ ] Playwright e2e, benchmarks, Pages deploy
 - [ ] Save/load model, presets, polish
 

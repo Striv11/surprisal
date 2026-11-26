@@ -33,3 +33,11 @@ Newest entries at the bottom. Each entry records what actually changed, what was
 - Tests: 4 anomaly cases (spike after learned stretch, sub-floor jitter ignored, unlearned high stream flagged only at the first symbol, empty).
 - Not verified: canvas rendering in a browser and the Pages deploy itself (no browser or GitHub access here); Pages source must be set to "GitHub Actions" in repo settings.
 - Next: Day 5 two-level hierarchy (level-2 predicts level-1 state) with a test on period-16 structure.
+
+## 2026-11-26 (Day 5)
+- Added an optional second level to `Model` (`top_hidden`, `top_leak`, `top_lr`): a leaky level-2 state integrates inferred level-1 states and feeds a learned top-down term into the level-1 prior. Default (`top_hidden = 0`) is bit-identical to before, so Day 2 parity still holds.
+- New C export `sp_create2(vocab, hidden, top, seed)` (`sp_create` delegates); `Engine.load(..., top)`, `withTop`, and a "Two-level model" checkbox in the UI (toggling starts a fresh model).
+- Tests: Rust test on a period-16 tune (halves share every local context) over 3 seeds: two-level mean surprise < 0.6x single-level; determinism/reset test; wasm-side test of the same in Node; ABI size validation.
+- Learned: with the default top-down learning rate (1x) the gain was only ~5%; a 10x multiplier on the top-down weights gave ~3.6x lower surprise (0.165 -> 0.045), since they start at zero and learn slowly. Slow leaks (0.1) were worse than 0.4 for this tune. Only top-down weights learn; recurrence is a fixed random reservoir.
+- Not verified: the toggle in a real browser; behaviour on real melodies beyond the synthetic tune.
+- Next: Day 6 Playwright e2e, theme/keyboard/mobile, and a native throughput benchmark with a CI budget.

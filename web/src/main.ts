@@ -101,6 +101,16 @@ async function main(): Promise<void> {
     history.length = 0;
     render();
   });
+  $("levels").addEventListener("change", (ev) => {
+    const two = (ev.target as HTMLInputElement).checked;
+    const next = engine.withTop(two ? 32 : 0);
+    engine.free();
+    engine = next;
+    history.length = 0;
+    $("dreamed").textContent = "";
+    $("status").textContent = `${two ? "Two-level" : "Single-level"} model, untrained. Pick a pattern and press Train.`;
+    render();
+  });
   $("reset").addEventListener("click", () => { engine.reset(); history.length = 0; render(); });
   $("dream").addEventListener("click", () => {
     const notes = engine.generate(16, dreamSeed++);

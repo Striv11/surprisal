@@ -2,7 +2,7 @@
 
 interface Exports {
   memory: WebAssembly.Memory;
-  sp_create(vocab: number, hidden: number, seed: number): number;
+  sp_create2(vocab: number, hidden: number, top: number, seed: number): number;
   sp_free(h: number): void;
   sp_observe(h: number, symbol: number): number;
   sp_predict(h: number, out: number, cap: number): number;
@@ -17,15 +17,17 @@ export class Engine {
   private x: Exports;
   readonly vocab: number;
   readonly hidden: number;
+  readonly top: number;
   readonly seed: number;
 
-  private constructor(x: Exports, vocab: number, hidden: number, seed: number) {
+  private constructor(x: Exports, vocab: number, hidden: number, top: number, seed: number) {
     this.x = x;
     this.vocab = vocab;
     this.hidden = hidden;
+    this.top = top;
     this.seed = seed;
-    this.handle = x.sp_create(vocab, hidden, seed);
-    if (this.handle === 0) throw new Error("sp_create rejected the configuration");
+    this.handle = x.sp_create2(vocab, hidden, top, seed);
+    if (this.handle === 0) throw new Error("sp_create2 rejected the configuration");
   }
 
   static async load(
@@ -33,6 +35,7 @@ export class Engine {
     vocab = 7,
     hidden = 24,
     seed = 42,
+    top = 0,
   ): Promise<Engine> {
     let instance: WebAssembly.Instance;
     if (wasm instanceof Response || wasm instanceof Promise) {
@@ -40,7 +43,12 @@ export class Engine {
     } else {
       ({ instance } = await WebAssembly.instantiate(wasm, {}));
     }
-    return new Engine(instance.exports as unknown as Exports, vocab, hidden, seed);
+    return new Engine(instance.exports as unknown as Exports, vocab, hidden, top, seed);
+  }
+
+  /** A fresh, untrained engine with the same wasm instance but a different level count. */
+  withTop(top: number): Engine {
+    return new Engine(this.x, this.vocab, this.hidden, top, this.seed);
   }
 
   /** Learn one symbol; returns its surprise in nats (computed before learning). */

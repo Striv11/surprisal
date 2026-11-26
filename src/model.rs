@@ -27,6 +27,12 @@ pub struct Config {
     pub learn_rate: f32,
     /// Precision (weight) of the state prior relative to sensory evidence.
     pub prior_precision: f32,
+    /// Size of the slow second level; 0 disables it (single-level model).
+    pub top_hidden: usize,
+    /// Leak of the level-2 state per symbol (smaller = slower timescale).
+    pub top_leak: f32,
+    /// Learning-rate multiplier for the top-down weights.
+    pub top_lr: f32,
     pub seed: u64,
 }
 
@@ -39,6 +45,9 @@ impl Config {
             infer_rate: 0.3,
             learn_rate: 0.05,
             prior_precision: 0.5,
+            top_hidden: 0,
+            top_leak: 0.25,
+            top_lr: 10.0,
             seed: 1,
         }
     }
@@ -62,6 +71,10 @@ pub struct Model {
     b: Vec<f32>, // H x V
     c: Vec<f32>, // V x H
     s: Vec<f32>, // current state (H)
+    d: Vec<f32>, // H x T top-down weights (level 2 -> level-1 prior), learned
+    e: Vec<f32>, // T x T level-2 recurrence (fixed random)
+    f: Vec<f32>, // T x H level-1 state -> level 2 (fixed random)
+    z: Vec<f32>, // level-2 state (T), a slow summary of level-1 states
     prev: Option<usize>,
 }
 
@@ -82,7 +95,16 @@ impl Model {
         let a = (0..h * h).map(|_| rng.symmetric(sa)).collect();
         let b = (0..h * v).map(|_| rng.symmetric(0.5)).collect();
         let c = (0..v * h).map(|_| rng.symmetric(sa)).collect();
+        let t = cfg.top_hidden;
+        let st = 1.0 / (t.max(1) as f32).sqrt();
+        let d = vec![0.0; h * t];
+        let e = (0..t * t).map(|_| rng.symmetric(st)).collect();
+        let f = (0..t * h).map(|_| rng.symmetric(sa)).collect();
         Model {
+            d,
+            e,
+            f,
+            z: vec![0.0; t],
             s: vec![0.0; h],
             a,
             b,
@@ -99,6 +121,7 @@ impl Model {
     /// Forget the running context (start of a new sequence) but keep weights.
     pub fn reset_context(&mut self) {
         self.s.iter_mut().for_each(|x| *x = 0.0);
+        self.z.iter_mut().for_each(|x| *x = 0.0);
         self.prev = None;
     }
 
@@ -115,6 +138,12 @@ impl Model {
                 if let Some(p) = self.prev {
                     x += self.b[i * v + p];
                 }
+                let t = self.z.len();
+                x += self.d[i * t..(i + 1) * t]
+                    .iter()
+                    .zip(&self.z)
+                    .map(|(w, z)| w * z)
+                    .sum::<f32>();
                 x.tanh()
             })
             .collect()
@@ -185,6 +214,32 @@ impl Model {
             if let Some(pv) = self.prev {
                 self.b[i * v + pv] += g;
             }
+            // Level 2 predicts the level-1 state: same local rule, presynaptic = z.
+            let t = self.z.len();
+            for j in 0..t {
+                self.d[i * t + j] += self.cfg.top_lr * g * self.z[j];
+            }
+        }
+        // Level 2 integrates the inferred level-1 state on a slower timescale.
+        let t = self.z.len();
+        if t > 0 {
+            let leak = self.cfg.top_leak;
+            let next: Vec<f32> = (0..t)
+                .map(|k| {
+                    let rec: f32 = self.e[k * t..(k + 1) * t]
+                        .iter()
+                        .zip(&self.z)
+                        .map(|(w, z)| w * z)
+                        .sum();
+                    let inp: f32 = self.f[k * h..(k + 1) * h]
+                        .iter()
+                        .zip(&s)
+                        .map(|(w, x)| w * x)
+                        .sum();
+                    (1.0 - leak) * self.z[k] + leak * (rec + inp).tanh()
+                })
+                .collect();
+            self.z = next;
         }
 
         self.s = s;
@@ -303,5 +358,51 @@ mod tests {
     #[should_panic]
     fn rejects_out_of_vocab() {
         Model::new(Config::new(3)).observe(3);
+    }
+
+    /// Period-16 tune whose two halves share every local context and differ only
+    /// at the very end: telling them apart needs a slower timescale.
+    fn period16() -> Vec<usize> {
+        let mut seq = Vec::new();
+        for _ in 0..8 {
+            seq.extend_from_slice(&[0, 1, 2, 3, 0, 1, 2, 3]);
+            seq.extend_from_slice(&[0, 1, 2, 3, 0, 1, 2, 4]);
+        }
+        seq
+    }
+
+    fn trained_surprise(top_hidden: usize, seed: u64) -> f32 {
+        let seq = period16();
+        let mut cfg = Config::new(5);
+        cfg.top_hidden = top_hidden;
+        cfg.top_leak = 0.4;
+        cfg.seed = seed;
+        let mut m = Model::new(cfg);
+        for _ in 0..300 {
+            mean_surprise(&mut m, &seq);
+        }
+        mean_surprise(&mut m, &seq)
+    }
+
+    #[test]
+    fn two_levels_beat_one_on_period16_structure() {
+        for seed in 1..=3 {
+            let one = trained_surprise(0, seed);
+            let two = trained_surprise(32, seed);
+            assert!(two < one * 0.6, "seed {seed}: one {one}, two {two}");
+        }
+    }
+
+    #[test]
+    fn two_level_training_is_deterministic_and_resets() {
+        let a = trained_surprise(16, 7);
+        assert_eq!(a, trained_surprise(16, 7));
+        let mut cfg = Config::new(3);
+        cfg.top_hidden = 8;
+        let mut m = Model::new(cfg);
+        let fresh = m.predict();
+        m.observe(1);
+        m.reset_context();
+        assert_eq!(fresh, m.predict());
     }
 }
