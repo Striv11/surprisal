@@ -39,6 +39,7 @@ Prerequisites: a stable Rust toolchain.
 ```
 bash check.sh        # fmt, clippy, tests
 cargo run --release  # terminal demo
+cargo run --release --example bench  # throughput benchmark (fails below 20k symbols/s)
 cargo build --release --lib --target wasm32-unknown-unknown  # browser module
 node tests-js/parity.mjs  # wasm == native check
 cd web && npm ci && npm run dev    # web app (builds the wasm, then Vite)
@@ -57,6 +58,11 @@ dreamed continuation: C E G E C E G B C E G E C E G B
 ```
 Browser demo: piano keys, text patterns, expectation bars, a canvas surprise timeline with anomalies marked red (surprise > 1.5 nats and > 3x the earlier median), and a "dream" button that samples a continuation without learning.
 
+Keyboard shortcuts: `1`-`7` play a note, `F` feed, `T` train, `D` dream, `R` forget context, `M` cycle theme (auto/light/dark, remembered in localStorage).
+
+## Performance
+Native release build: ~300k symbols/s single-level, ~260k two-level (hidden 24, 8 inference steps); CI fails below 20k symbols/s.
+
 ## Design decisions & trade-offs
 - Optional second level (`Config::top_hidden`): a slow leaky layer `z` integrates level-1 states and sends a top-down term `D z` into the level-1 prior; `D` learns with the same local rule (state error x presynaptic `z`). The recurrence and level-1->2 weights are fixed random (reservoir-style), a deliberate simplification: only top-down weights are learned. On a period-16 tune whose halves share all local contexts, mean surprise drops ~3.5x versus one level.
 - Cross-entropy sensory error (softmax readout) instead of Gaussian error: gives a clean probability per symbol and surprise in nats.
@@ -68,7 +74,8 @@ Browser demo: piano keys, text patterns, expectation bars, a canvas surprise tim
 - [x] Web app shell: piano + text input, expectation bars, history
 - [x] Surprise timeline canvas, dream mode, Pages workflow
 - [x] Hierarchical (two-level) model with UI toggle
-- [ ] Playwright e2e, benchmarks, Pages deploy
+- [x] Benchmark with CI budget, theme toggle, keyboard shortcuts, mobile tweaks
+- [ ] Playwright e2e (needs a browser; not yet)
 - [ ] Save/load model, presets, polish
 
 ## License

@@ -1,5 +1,7 @@
 import { Engine } from "./engine.ts";
 import { drawTimeline, findAnomalies } from "./timeline.ts";
+import { keyAction } from "./keys.ts";
+import { THEME_KEY, nextTheme, parseTheme, type Theme } from "./theme.ts";
 import { NOTES, PRESETS, argmax, parsePattern } from "./pattern.ts";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -61,7 +63,21 @@ function readPattern(): number[] | null {
   return symbols;
 }
 
+let theme: Theme = "auto";
+function applyTheme(t: Theme): void {
+  theme = t;
+  if (t === "auto") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.dataset.theme = t;
+  $("theme").textContent = `Theme: ${t}`;
+  try { localStorage.setItem(THEME_KEY, t); } catch { /* storage may be blocked */ }
+  redrawTimeline();
+}
+
 async function main(): Promise<void> {
+  let stored: string | null = null;
+  try { stored = localStorage.getItem(THEME_KEY); } catch { /* ignore */ }
+  applyTheme(parseTheme(stored));
+  $("theme").addEventListener("click", () => applyTheme(nextTheme(theme)));
   const piano = $("piano");
   NOTES.forEach((n, i) => {
     const b = document.createElement("button");
@@ -115,6 +131,17 @@ async function main(): Promise<void> {
   $("dream").addEventListener("click", () => {
     const notes = engine.generate(16, dreamSeed++);
     $("dreamed").textContent = notes.map((n) => NOTES[n]).join(" ");
+  });
+  window.addEventListener("keydown", (ev) => {
+    const a = keyAction({
+      key: ev.key, ctrlKey: ev.ctrlKey, metaKey: ev.metaKey, altKey: ev.altKey,
+      targetTag: (ev.target as HTMLElement | null)?.tagName,
+    });
+    if (!a) return;
+    ev.preventDefault();
+    if (a.kind === "note") { feed(a.note); render(); }
+    else if (a.kind === "theme") applyTheme(nextTheme(theme));
+    else $(a.kind === "feed" ? "feed" : a.kind).click();
   });
   window.addEventListener("resize", redrawTimeline);
   render();

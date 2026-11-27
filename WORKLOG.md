@@ -41,3 +41,9 @@ Newest entries at the bottom. Each entry records what actually changed, what was
 - Learned: with the default top-down learning rate (1x) the gain was only ~5%; a 10x multiplier on the top-down weights gave ~3.6x lower surprise (0.165 -> 0.045), since they start at zero and learn slowly. Slow leaks (0.1) were worse than 0.4 for this tune. Only top-down weights learn; recurrence is a fixed random reservoir.
 - Not verified: the toggle in a real browser; behaviour on real melodies beyond the synthetic tune.
 - Next: Day 6 Playwright e2e, theme/keyboard/mobile, and a native throughput benchmark with a CI budget.
+
+## 2026-11-27 (Day 6)
+- Added `examples/bench.rs`: native throughput benchmark (60k symbols, warm-up) for one- and two-level models; exits non-zero below 20k symbols/s (override via SURPRISAL_BENCH_BUDGET). `check.sh` runs it in release, so CI enforces the budget. Measured ~300k/s single-level and ~260k/s two-level, so the budget has >10x headroom and only catches gross regressions.
+- Web: theme toggle (auto/light/dark, persisted, canvas redraws with theme colours) and keyboard shortcuts (1-7, F, T, D, R, M). Logic lives in DOM-free `keys.ts`/`theme.ts` with Node tests (modifiers, typing in fields and focused buttons are ignored). Small-screen CSS tweaks for the form and touch targets.
+- Not done: Playwright e2e (no browser here and installing one is heavy); the PLAN row is marked partial. Theme/shortcut behaviour and mobile layout are not visually verified in a real browser.
+- Next: Day 7 save/load model JSON with an exact round-trip test, presets, README screenshots, error states, v0.1.0 notes; then Playwright e2e if a browser is available.

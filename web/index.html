@@ -10,6 +10,7 @@
 <main>
   <h1>surprisal</h1>
   <p class="lede">A tiny predictive-coding network, running in your browser. Play or type a pattern, repeat it, and watch the model's expectation sharpen. Then break the pattern.</p>
+  <button type="button" id="theme" class="theme" aria-label="Change colour theme">Theme: auto</button>
   <p id="status" role="status">Loading model…</p>
 
   <section aria-labelledby="in">
@@ -17,12 +18,13 @@
     <div id="piano" role="group" aria-label="Piano keys"></div>
     <form id="text-form">
       <label>Pattern <input id="text" value="C E G E C E G B" autocomplete="off" spellcheck="false"></label>
-      <button type="submit">Feed once</button>
+      <button type="submit" id="feed">Feed once</button>
       <button type="button" id="train">Train ×20</button>
       <button type="button" id="reset">Forget context</button>
     </form>
     <p id="error" role="alert"></p>
     <p><label><input type="checkbox" id="levels"> Two-level model</label> <small>(a slow second layer predicts the first layer's state; helps with long, repeating structure. Toggling starts a fresh model.)</small></p>
+    <p class="hint">Shortcuts: <kbd>1</kbd>–<kbd>7</kbd> play a note, <kbd>F</kbd> feed, <kbd>T</kbd> train, <kbd>D</kbd> dream, <kbd>R</kbd> forget context, <kbd>M</kbd> theme.</p>
     <p>Presets: <span id="presets"></span></p>
   </section>
 
