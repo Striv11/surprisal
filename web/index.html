@@ -25,6 +25,7 @@
     <p id="error" role="alert"></p>
     <p><label><input type="checkbox" id="levels"> Two-level model</label> <small>(a slow second layer predicts the first layer's state; helps with long, repeating structure. Toggling starts a fresh model.)</small></p>
     <p class="hint">Shortcuts: <kbd>1</kbd>–<kbd>7</kbd> play a note, <kbd>F</kbd> feed, <kbd>T</kbd> train, <kbd>D</kbd> dream, <kbd>R</kbd> forget context, <kbd>M</kbd> theme.</p>
+    <p>Model file: <button type="button" id="save">Save model</button> <label class="filebtn">Load model <input type="file" id="load" accept="application/json,.json" hidden></label> <small>(a JSON file with the learned weights; it stays on your device)</small></p>
     <p>Presets: <span id="presets"></span></p>
   </section>
 

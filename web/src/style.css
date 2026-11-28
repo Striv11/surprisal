@@ -13,7 +13,8 @@ section { background:var(--card); border-radius:12px; padding:0.5rem 1rem 1rem; 
 #piano button:active, #piano button:focus-visible { background:var(--accent); color:#fff; }
 form { display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center; }
 input { font:inherit; padding:0.3rem 0.5rem; min-width:14ch; }
-button { font:inherit; cursor:pointer; }
+button, .filebtn { font:inherit; cursor:pointer; }
+.filebtn { display:inline-block; padding:1px 6px; border:1px solid var(--muted); border-radius:3px; }
 #error { color:var(--hot); min-height:1.5em; margin:0.25rem 0; }
 #presets button { margin-right:0.4rem; }
 .bar { display:grid; grid-template-columns: 2ch 1fr 5ch; gap:0.5rem; align-items:center; margin:2px 0; }

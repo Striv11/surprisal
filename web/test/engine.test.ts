@@ -74,3 +74,18 @@ test("two-level engine beats single-level on a period-16 pattern", { skip }, asy
   const two = await run(32);
   assert.ok(two < one * 0.6, `one ${one}, two ${two}`);
 });
+
+test("save/restore round-trips exactly and rejects garbage", { skip }, async () => {
+  const { e, melody } = await trained();
+  for (const m of melody.slice(0, 3)) e.observe(m);
+  const json = e.save();
+  const r = e.restore(json);
+  assert.equal(r.save(), json);
+  assert.deepEqual([...r.predict()], [...e.predict()]);
+  assert.equal(r.vocab, e.vocab);
+  for (const m of [4, 1, 2]) assert.equal(r.observe(m), e.observe(m));
+  assert.throws(() => e.restore("{}"), /valid surprisal/);
+  assert.throws(() => e.restore(json.slice(0, 100)), /valid surprisal/);
+  r.free();
+  e.free();
+});

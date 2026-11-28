@@ -26,7 +26,8 @@ Most sequence models are trained offline with backpropagation through time and a
   src/rng.rs    deterministic xorshift PRNG
   src/model.rs  the network (Config, Model, StepReport)
   src/main.rs   terminal demo
-  src/wasm.rs   C-ABI exports (sp_create/sp_create2/observe/predict/generate/reset)
+  src/persist.rs save/load as JSON (f32 stored as bit patterns: exact round trip)
+  src/wasm.rs   C-ABI exports (sp_create/sp_create2/observe/predict/generate/reset/save/load)
   web/src/engine.ts   typed wrapper over the C ABI
   web/src/pattern.ts  note/pattern parsing
   web/src/timeline.ts anomaly detection + canvas surprise timeline
@@ -60,6 +61,8 @@ Browser demo: piano keys, text patterns, expectation bars, a canvas surprise tim
 
 Keyboard shortcuts: `1`-`7` play a note, `F` feed, `T` train, `D` dream, `R` forget context, `M` cycle theme (auto/light/dark, remembered in localStorage).
 
+Save/load: "Save model" downloads `surprisal-model.json` (weights, state and config); "Load model" restores it. Floats are stored as raw bit patterns, so a restored model continues bit-for-bit like the original; malformed files are rejected with an error message, never a crash. Nothing leaves your device.
+
 ## Performance
 Native release build: ~300k symbols/s single-level, ~260k two-level (hidden 24, 8 inference steps); CI fails below 20k symbols/s.
 
@@ -70,13 +73,14 @@ Native release build: ~300k symbols/s single-level, ~260k two-level (hidden 24, 
 
 ## Roadmap
 - [x] Day 1: core model, PRNG, tests, terminal demo
-- [x] WASM C-ABI build (28 KB) and Node parity test
+- [x] WASM C-ABI build (28 KB at first, ~71 KB with save/load; budget 100 KB) and Node parity test
 - [x] Web app shell: piano + text input, expectation bars, history
 - [x] Surprise timeline canvas, dream mode, Pages workflow
 - [x] Hierarchical (two-level) model with UI toggle
 - [x] Benchmark with CI budget, theme toggle, keyboard shortcuts, mobile tweaks
 - [ ] Playwright e2e (needs a browser; not yet)
-- [ ] Save/load model, presets, polish
+- [x] Save/load model JSON (exact round trip), Lullaby and Random presets
+- [ ] README screenshots, v0.1.0 release notes
 
 ## License
 MIT. See [LICENSE](LICENSE).

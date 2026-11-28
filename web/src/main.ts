@@ -2,7 +2,7 @@ import { Engine } from "./engine.ts";
 import { drawTimeline, findAnomalies } from "./timeline.ts";
 import { keyAction } from "./keys.ts";
 import { THEME_KEY, nextTheme, parseTheme, type Theme } from "./theme.ts";
-import { NOTES, PRESETS, argmax, parsePattern } from "./pattern.ts";
+import { NOTES, PRESETS, argmax, parsePattern, randomPattern } from "./pattern.ts";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const MAX_HISTORY = 64;
@@ -92,6 +92,10 @@ async function main(): Promise<void> {
     b.addEventListener("click", () => { ($("text") as HTMLInputElement).value = text; });
     $("presets").append(b);
   }
+  const rb = document.createElement("button");
+  rb.textContent = "Random";
+  rb.addEventListener("click", () => { ($("text") as HTMLInputElement).value = randomPattern(); });
+  $("presets").append(rb);
 
   try {
     engine = await Engine.load(fetch(`${import.meta.env.BASE_URL}surprisal.wasm`));
@@ -126,6 +130,37 @@ async function main(): Promise<void> {
     $("dreamed").textContent = "";
     $("status").textContent = `${two ? "Two-level" : "Single-level"} model, untrained. Pick a pattern and press Train.`;
     render();
+  });
+  $("save").addEventListener("click", () => {
+    const url = URL.createObjectURL(new Blob([engine.save()], { type: "application/json" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "surprisal-model.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    $("status").textContent = "Model saved to surprisal-model.json.";
+  });
+  $("load").addEventListener("change", async (ev) => {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+    try {
+      const next = engine.restore(await file.text());
+      if (next.vocab !== NOTES.length) {
+        next.free();
+        throw new Error(`model has ${next.vocab} symbols, this page uses ${NOTES.length}`);
+      }
+      engine.free();
+      engine = next;
+      ($("levels") as HTMLInputElement).checked = engine.top > 0;
+      history.length = 0;
+      $("dreamed").textContent = "";
+      $("status").textContent = `Loaded ${file.name}. Feed a pattern to see what it learned.`;
+      render();
+    } catch (err) {
+      $("status").textContent = `Could not load that file: ${(err as Error).message}`;
+    }
   });
   $("reset").addEventListener("click", () => { engine.reset(); history.length = 0; render(); });
   $("dream").addEventListener("click", () => {

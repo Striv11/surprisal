@@ -47,3 +47,12 @@ Newest entries at the bottom. Each entry records what actually changed, what was
 - Web: theme toggle (auto/light/dark, persisted, canvas redraws with theme colours) and keyboard shortcuts (1-7, F, T, D, R, M). Logic lives in DOM-free `keys.ts`/`theme.ts` with Node tests (modifiers, typing in fields and focused buttons are ignored). Small-screen CSS tweaks for the form and touch targets.
 - Not done: Playwright e2e (no browser here and installing one is heavy); the PLAN row is marked partial. Theme/shortcut behaviour and mobile layout are not visually verified in a real browser.
 - Next: Day 7 save/load model JSON with an exact round-trip test, presets, README screenshots, error states, v0.1.0 notes; then Playwright e2e if a browser is available.
+
+## 2026-11-28 (Day 7)
+- Added `src/persist.rs`: `Model::to_json` / `from_json` with no dependencies (a small JSON reader). Every f32 is stored as its bit pattern, so the round trip is exact. The loader checks the format tag, version, dimension limits, array lengths and `prev`, and returns `Err` instead of panicking; nesting depth is capped.
+- C ABI: `sp_save`, `sp_load`, `sp_dims`. `Engine.save()` / `restore()` in TS; UI has Save model (download) and Load model (file picker) with a visible error when the file is invalid or has the wrong vocabulary size. Loading restores the two-level checkbox.
+- Presets: added Lullaby and a Random button (`randomPattern`, never repeats a note back to back).
+- Tests: Rust round trip for one- and two-level models (re-serialised JSON identical, then 5 further observations and generation match bit-for-bit), 12 malformed-file cases, ABI round trip; Node test for wasm save/restore and rejecting garbage; preset/random pattern tests.
+- Learned: the wasm grew from ~31 KB to ~71 KB, mostly from f64 parsing/number formatting pulled in by the JSON code. Still under the 100 KB budget; a bit-pattern-only parser would shrink it if needed.
+- Not verified: Save/Load buttons in a real browser (no browser here; web typecheck was skipped because `web/node_modules` is absent, tests ran with node directly).
+- Next: README screenshots and v0.1.0 notes once a browser is available; Playwright e2e from Day 6.

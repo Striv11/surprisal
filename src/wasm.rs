@@ -81,6 +81,52 @@ pub unsafe extern "C" fn sp_reset(m: *mut Model) {
     }
 }
 
+/// Serialise the model to JSON. Returns a buffer from `sp_alloc` (free it with
+/// `sp_dealloc(ptr, len)`) and writes its length to `len_out`; null on failure.
+#[no_mangle]
+pub unsafe extern "C" fn sp_save(m: *const Model, len_out: *mut u32) -> *mut u8 {
+    let (Some(m), false) = (m.as_ref(), len_out.is_null()) else {
+        return std::ptr::null_mut();
+    };
+    let json = m.to_json();
+    let p = sp_alloc(json.len() as u32);
+    std::ptr::copy_nonoverlapping(json.as_ptr(), p, json.len());
+    *len_out = json.len() as u32;
+    p
+}
+
+/// Restore a model from `len` bytes of JSON written by `sp_save`.
+/// Returns null if the data is invalid.
+#[no_mangle]
+pub unsafe extern "C" fn sp_load(data: *const u8, len: u32) -> *mut Model {
+    if data.is_null() {
+        return std::ptr::null_mut();
+    }
+    let bytes = std::slice::from_raw_parts(data, len as usize);
+    match std::str::from_utf8(bytes)
+        .ok()
+        .and_then(|t| Model::from_json(t).ok())
+    {
+        Some(m) => Box::into_raw(Box::new(m)),
+        None => std::ptr::null_mut(),
+    }
+}
+
+/// Vocabulary, hidden and top sizes of a model (for UI after a load).
+#[no_mangle]
+pub unsafe extern "C" fn sp_dims(m: *const Model, out: *mut u32) -> u32 {
+    match (m.as_ref(), out.is_null()) {
+        (Some(m), false) => {
+            let c = m.config();
+            *out = c.vocab as u32;
+            *out.add(1) = c.hidden as u32;
+            *out.add(2) = c.top_hidden as u32;
+            3
+        }
+        _ => 0,
+    }
+}
+
 #[no_mangle]
 pub extern "C" fn sp_alloc(bytes: u32) -> *mut u8 {
     let mut v = vec![0u8; bytes.max(1) as usize].into_boxed_slice();
@@ -126,6 +172,31 @@ mod tests {
             let want: Vec<u32> = direct.generate(6, 3).iter().map(|&x| x as u32).collect();
             assert_eq!(out.to_vec(), want);
             sp_reset(h);
+            sp_free(h);
+        }
+    }
+
+    #[test]
+    fn save_and_load_through_the_abi() {
+        unsafe {
+            let h = sp_create2(5, 12, 6, 3);
+            for s in [0u32, 1, 2, 3, 0, 1, 2, 3] {
+                sp_observe(h, s);
+            }
+            let mut len = 0u32;
+            let p = sp_save(h, &mut len);
+            assert!(!p.is_null() && len > 0);
+            let g = sp_load(p, len);
+            assert!(!g.is_null());
+            let mut dims = [0u32; 3];
+            assert_eq!(sp_dims(g, dims.as_mut_ptr()), 3);
+            assert_eq!(dims, [5, 12, 6]);
+            assert_eq!(sp_observe(h, 4), sp_observe(g, 4));
+            assert!(sp_load(p, len / 2).is_null());
+            assert!(sp_load(std::ptr::null(), 4).is_null());
+            assert!(sp_save(h, std::ptr::null_mut()).is_null());
+            sp_dealloc(p, len);
+            sp_free(g);
             sp_free(h);
         }
     }

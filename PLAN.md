@@ -10,7 +10,7 @@ Seven-day arc. Every milestone has acceptance criteria that can be checked by a 
 | 4 | Surprise timeline + Pages | Canvas timeline of surprise with anomaly highlights; "dream" mode generates continuations; `pages.yml` deploys; live link in README; empty state and landing section present | [x] |
 | 5 | Two-level hierarchy | Level-2 layer predicts level-1 state; test: on a pattern with period-16 structure, 2-level mean surprise < 1-level after equal training; UI toggle | [x] |
 | 6 | Quality | Playwright e2e for train, break pattern -> spike, dream; light/dark theme, keyboard shortcuts, mobile layout; benchmark with budget (>= 20k symbols/s native) enforced in CI | [~] done except Playwright e2e (no browser available yet) |
-| 7 | Polish + release | Save/load model JSON round-trips exactly (test); presets (scale, lullaby, random); screenshots in README; error/loading states; v0.1.0 tag notes | [ ] |
+| 7 | Polish + release | Save/load model JSON round-trips exactly (test); presets (scale, lullaby, random); screenshots in README; error/loading states; v0.1.0 tag notes | [~] save/load + presets + load error state done; screenshots (need a browser) and release notes remain |
 
 ## Stretch
 - Learn rate/precision sliders with live free-energy readout

@@ -8,6 +8,9 @@ interface Exports {
   sp_predict(h: number, out: number, cap: number): number;
   sp_generate(h: number, len: number, seed: number, out: number): number;
   sp_reset(h: number): void;
+  sp_save(h: number, lenOut: number): number;
+  sp_load(data: number, len: number): number;
+  sp_dims(h: number, out: number): number;
   sp_alloc(bytes: number): number;
   sp_dealloc(p: number, bytes: number): void;
 }
@@ -20,13 +23,13 @@ export class Engine {
   readonly top: number;
   readonly seed: number;
 
-  private constructor(x: Exports, vocab: number, hidden: number, top: number, seed: number) {
+  private constructor(x: Exports, vocab: number, hidden: number, top: number, seed: number, handle?: number) {
     this.x = x;
     this.vocab = vocab;
     this.hidden = hidden;
     this.top = top;
     this.seed = seed;
-    this.handle = x.sp_create2(vocab, hidden, top, seed);
+    this.handle = handle ?? x.sp_create2(vocab, hidden, top, seed);
     if (this.handle === 0) throw new Error("sp_create2 rejected the configuration");
   }
 
@@ -49,6 +52,46 @@ export class Engine {
   /** A fresh, untrained engine with the same wasm instance but a different level count. */
   withTop(top: number): Engine {
     return new Engine(this.x, this.vocab, this.hidden, top, this.seed);
+  }
+
+  /** Serialise weights and state to JSON (floats stored as exact bit patterns). */
+  save(): string {
+    this.check();
+    const lenPtr = this.x.sp_alloc(4);
+    try {
+      const p = this.x.sp_save(this.handle, lenPtr);
+      if (p === 0) throw new Error("sp_save failed");
+      const len = new Uint32Array(this.x.memory.buffer, lenPtr, 1)[0];
+      try {
+        return new TextDecoder().decode(new Uint8Array(this.x.memory.buffer, p, len));
+      } finally {
+        this.x.sp_dealloc(p, len);
+      }
+    } finally {
+      this.x.sp_dealloc(lenPtr, 4);
+    }
+  }
+
+  /** A new engine (same wasm instance) restored from `save()` output. Throws on invalid data. */
+  restore(json: string): Engine {
+    const bytes = new TextEncoder().encode(json);
+    const p = this.x.sp_alloc(bytes.length);
+    let handle: number;
+    try {
+      new Uint8Array(this.x.memory.buffer, p, bytes.length).set(bytes);
+      handle = this.x.sp_load(p, bytes.length);
+    } finally {
+      this.x.sp_dealloc(p, bytes.length);
+    }
+    if (handle === 0) throw new Error("not a valid surprisal model file");
+    const out = this.x.sp_alloc(12);
+    try {
+      this.x.sp_dims(handle, out);
+      const [v, h, t] = new Uint32Array(this.x.memory.buffer, out, 3);
+      return new Engine(this.x, v, h, t, this.seed, handle);
+    } finally {
+      this.x.sp_dealloc(out, 12);
+    }
   }
 
   /** Learn one symbol; returns its surprise in nats (computed before learning). */

@@ -40,4 +40,16 @@ export const PRESETS: Record<string, string> = {
   "Arpeggio": "C E G E C E G B",
   "Scale": "C D E F G A B A G F E D",
   "Twinkle": "C C G G A A G F F E E D D C",
+  "Lullaby": "E E G E E G E G C B A A G D F E D C",
 };
+
+/** A random pattern of `len` notes (never the same note twice in a row). `rand` returns [0, 1). */
+export function randomPattern(len = 8, rand: () => number = Math.random): string {
+  const out: number[] = [];
+  for (let i = 0; i < len; i++) {
+    let n = Math.min(NOTES.length - 1, Math.floor(rand() * NOTES.length));
+    if (i > 0 && n === out[i - 1]) n = (n + 1) % NOTES.length;
+    out.push(n);
+  }
+  return out.map((n) => NOTES[n]).join(" ");
+}
