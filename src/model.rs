@@ -67,15 +67,15 @@ pub struct StepReport {
 #[derive(Clone, Debug)]
 pub struct Model {
     cfg: Config,
-    a: Vec<f32>, // H x H
-    b: Vec<f32>, // H x V
-    c: Vec<f32>, // V x H
-    s: Vec<f32>, // current state (H)
-    d: Vec<f32>, // H x T top-down weights (level 2 -> level-1 prior), learned
-    e: Vec<f32>, // T x T level-2 recurrence (fixed random)
-    f: Vec<f32>, // T x H level-1 state -> level 2 (fixed random)
-    z: Vec<f32>, // level-2 state (T), a slow summary of level-1 states
-    prev: Option<usize>,
+    pub(crate) a: Vec<f32>, // H x H
+    pub(crate) b: Vec<f32>, // H x V
+    pub(crate) c: Vec<f32>, // V x H
+    pub(crate) s: Vec<f32>, // current state (H)
+    pub(crate) d: Vec<f32>, // H x T top-down weights (level 2 -> level-1 prior), learned
+    pub(crate) e: Vec<f32>, // T x T level-2 recurrence (fixed random)
+    pub(crate) f: Vec<f32>, // T x H level-1 state -> level 2 (fixed random)
+    pub(crate) z: Vec<f32>, // level-2 state (T), a slow summary of level-1 states
+    pub(crate) prev: Option<usize>,
 }
 
 pub fn softmax(logits: &[f32]) -> Vec<f32> {
@@ -112,6 +112,10 @@ impl Model {
             prev: None,
             cfg,
         }
+    }
+
+    pub(crate) fn prev_symbol(&self) -> Option<usize> {
+        self.prev
     }
 
     pub fn config(&self) -> &Config {
